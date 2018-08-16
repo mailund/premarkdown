@@ -1,6 +1,9 @@
 
 import os.path
 import contextlib
+import plugin
+
+plugins = plugin.Plugins()
 
 class CircularInclusionError(Exception):
 	def __init__(self, filename, stack):
@@ -12,26 +15,12 @@ class CircularInclusionError(Exception):
 		self.stack = stack
 
 @contextlib.contextmanager
-def top_stack(stack, filename):
+def _add_to_stack(stack, filename):
 	if filename in stack:
 		raise CircularInclusionError(filename, stack)
 	stack.append(filename)
 	yield stack
 	stack.pop()
-
-# FIXME: mockup
-from termcolor import colored
-def handle_FIXME(filename, lineno, message):
-	lineinfo = "{filename:4}({lineno:3d})".format(
-		filename = filename, lineno = lineno
-	)
-		
-	print(
-		"▶",
-		#colored(lineinfo, attrs = ["underline", "dark"]),
-		colored("FIXME", "red", attrs = ["bold"]) + ":",
-		colored(message, attrs = ["underline"])
-	)
 
 def flatten(filename, stack = None):
 	"""
@@ -42,7 +31,7 @@ def flatten(filename, stack = None):
 	if stack is None:
 		stack = []
 	
-	with top_stack(stack, filename) as stack, open(filename) as stream:
+	with _add_to_stack(stack, filename) as stack, open(filename) as stream:
 		for lineno, line in enumerate(stream):
 
 			if line.startswith('%%'): # comments
@@ -51,9 +40,9 @@ def flatten(filename, stack = None):
 				tag = tag.strip()
 				rest = "" if rest == [] else rest[0].strip()
 
-				# FIXME: mockup
-				if tag == "FIXME":
-					handle_FIXME(filename, lineno, rest)
+				# Handle plugins
+				if tag in plugins.tag_plugins:
+					plugins.tag_plugins[tag].handle_tag(filename, lineno, tag, rest)
 				
 				# Whether we handled a tag or not, we do not
 				# yield a comment line.
