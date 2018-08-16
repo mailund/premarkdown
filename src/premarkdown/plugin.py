@@ -7,13 +7,18 @@ import collections
 
 class TagPlugin(abc.ABC):
 	@abc.abstractmethod
-	def handle_tag(file, lineno, *rest):
+	def handle_tag(self, file, lineno, content):
 		pass
 
 class SummaryPlugin(abc.ABC):
     @abc.abstractmethod
-    def summarize(outfile):
-        pass    
+    def summarize(self, outfile):
+        pass
+
+class ObserverPlugin(abc.ABC):
+    @abc.abstractmethod
+    def observe_line(self, filename, lineno, line):
+        pass
 
 class Plugins:
     __instance = None
@@ -43,40 +48,59 @@ class Plugins:
 
     def _collect_summary_plugins(self):
         plugin_classes = list(SummaryPlugin.__subclasses__()) + \
-                  list(SummaryPlugin._abc_registry)
+                         list(SummaryPlugin._abc_registry)
 
         self._summary_plugins = {}
         for plugin_class in plugin_classes:
             plugin = self._register_plugin_class(plugin_class)
             self._summary_plugins[plugin.__class__.__name__] = plugin
 
+    def _collect_observer_plugins(self):
+        self._observer_plugins = []
+        plugin_classes = list(ObserverPlugin.__subclasses__()) + \
+                         list(ObserverPlugin._abc_registry)
+        for plugin_class in plugin_classes:
+            observer = self._register_plugin_class(plugin_class)
+            self._observer_plugins.append(observer)
+
     def _collect_plugins(self):
         self._plugins = {}
         self._collect_tag_plugins()
+        self._collect_observer_plugins()
         self._collect_summary_plugins()
 
     def __init__(self):
     	self._collect_plugins()
+
+    @property
+    def plugins(self):
+        return self._plugins
+    
    
     @property
     def tag_plugins(self):
         return self._tag_plugins
 
     @property
+    def observer_plugins(self):
+        return self._observer_plugins
+    
+
+    @property
     def summary_plugins(self):
         return self._summary_plugins
 
-# FIXME: mockup
+# FIXME: move concrete plugins to seperate files
 from termcolor import colored
-class FIXME(TagPlugin, SummaryPlugin):
-    """FIXMEs in document."""
+class fixme(TagPlugin, SummaryPlugin):
+    """FIXMEs in document"""
     supported_tags = [
         "FIXME", "Fixme", "fixme",
         "TODO", "Todo", "todo"
     ]
 
     def __init__(self):
-        self.files = {}
+        self.files = collections.OrderedDict()
 
     def file_lines(self, filename):
         return self.files.setdefault(filename, collections.OrderedDict())
@@ -97,4 +121,19 @@ class FIXME(TagPlugin, SummaryPlugin):
                         message,
                         file = outfile
                     )
+
+class wc(ObserverPlugin, SummaryPlugin):
+    """Word count in document"""
+    def __init__(self):
+        self.files = collections.OrderedDict()
+
+    def observe_line(self, filename, lineno, line):
+        if filename not in self.files:
+            self.files[filename] = 0
+        self.files[filename] += len(line.split())# FIXME: better recognition of words
+
+    def summarize(self, outfile):
+        for filename, count in self.files.items():
+            # FIXME: better formatting
+            print(filename, count, file = outfile)
 

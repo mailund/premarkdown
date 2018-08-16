@@ -33,6 +33,8 @@ def flatten(filename, stack = None):
 	
 	with _add_to_stack(stack, filename) as stack, open(filename) as stream:
 		for lineno, line in enumerate(stream):
+			# always get rid of trailing space (including newline)
+			line = line.rstrip()
 
 			if line.startswith('%%'): # comments
 				# See if we have a tag we can handle...
@@ -62,4 +64,7 @@ def flatten(filename, stack = None):
 					yield from flatten(subfile_full, stack)
 					continue
 
-			yield line.rstrip()
+			for observer in plugins.observer_plugins:
+				observer.observe_line(filename, lineno, line)
+				
+			yield line
