@@ -11,6 +11,11 @@ class WC(plugin.ObserverPlugin, plugin.SummaryPlugin):
             self.files[filename] = 0
 
         # FIXME: better recognition of words id:7
+        #   
+        # ----
+        # <https://github.com/mailund/premarkdown/issues/8>
+        # Thomas Mailund
+        # mailund@birc.au.dk
         self.files[filename] += len(line.split())
 
     def summarize(self, outfile):
