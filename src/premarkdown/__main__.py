@@ -28,7 +28,12 @@ def _collect_commands():
 			commands[command_name] = value
 	return commands
 
-# FIXME make this something you can plug in
+# FIXME make this something you can plug in id:1
+#   
+# ----
+# <https://github.com/mailund/premarkdown/issues/3>
+# Thomas Mailund
+# mailund@birc.au.dk
 class Scanner:
 	def __init__(self, lines):
 		self.lines = lines

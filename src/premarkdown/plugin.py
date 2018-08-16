@@ -90,7 +90,12 @@ class Plugins:
     def summary_plugins(self):
         return self._summary_plugins
 
-# FIXME: move concrete plugins to seperate files
+# FIXME: move concrete plugins to seperate files id:5
+#   
+# ----
+# <https://github.com/mailund/premarkdown/issues/4>
+# Thomas Mailund
+# mailund@birc.au.dk
 from termcolor import colored
 class fixme(TagPlugin, SummaryPlugin):
     """FIXMEs in document"""
@@ -130,10 +135,20 @@ class wc(ObserverPlugin, SummaryPlugin):
     def observe_line(self, filename, lineno, line):
         if filename not in self.files:
             self.files[filename] = 0
-        self.files[filename] += len(line.split())# FIXME: better recognition of words
+        self.files[filename] += len(line.split())# FIXME: better recognition of words id:7
+                                                 #   
+                                                 # ----
+                                                 # <https://github.com/mailund/premarkdown/issues/5>
+                                                 # Thomas Mailund
+                                                 # mailund@birc.au.dk
 
     def summarize(self, outfile):
         for filename, count in self.files.items():
-            # FIXME: better formatting
+            # FIXME: better formatting id:9
+            #   
+            # ----
+            # <https://github.com/mailund/premarkdown/issues/6>
+            # Thomas Mailund
+            # mailund@birc.au.dk
             print(filename, count, file = outfile)
 
