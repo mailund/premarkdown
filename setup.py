@@ -7,10 +7,10 @@ A preprocessor for combining and processing Markdown documents.
 
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    name = 'premarkdown',
+    name = 'premd',
     version = '0.1.0',
     author = "Thomas Mailund",
     author_email = "thomas@mailund.dk",
@@ -36,15 +36,16 @@ setup(
         "termcolor"
     ],
 
-    package_dir = {
-        '': 'src'
-    },
-    packages = [
-        'premarkdown'
-    ],
+    package_dir = {'': 'src'},
+    packages = find_packages("src"),
+
     entry_points = {
         'console_scripts': [
-            'premd = premarkdown.__main__:main'
+            'premd = premd.__main__:main'
         ],
+        'premd.plugins': [
+            'fixme = premd.plugins.fixme:FIXME',
+            'wc = premd.plugins.wc:WC'
+        ]
     },
 )

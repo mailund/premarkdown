@@ -1,9 +1,8 @@
 
 import os.path
 import contextlib
-import plugin
 
-plugins = plugin.Plugins()
+from .plugin import plugins
 
 class CircularInclusionError(Exception):
 	def __init__(self, filename, stack):

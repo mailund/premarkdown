@@ -7,10 +7,8 @@ import argparse
 import colorama ; colorama.init()
 from termcolor import colored
 
-import flatten
-import plugin
-
-plugins = plugin.Plugins()
+from . import flatten
+from .plugin import plugins
 
 def _report_error(msg):
 	output_msg = colored("Error", "red", attrs = ["bold"]) + ": " +msg
@@ -82,7 +80,6 @@ def summarize_command(args):
 	scanner = Scanner(flatten.flatten(args.infile))
 	scan(scanner)
 
-	#for name, pluging in sorted(plugins.summary_plugins.items()):
 	for name in args.info:
 		plugin = plugins.summary_plugins[name]
 		header = plugin.__class__.__doc__
@@ -157,4 +154,5 @@ def main():
 
 	
 # Run this in case the module is called as a program...
-main()
+if __name__ == "__main__":
+	main()
