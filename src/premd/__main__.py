@@ -55,24 +55,40 @@ def scan(scanner):
 		pass
 
 ## Commands
+# For formatting main argument parseing message
+class MixedFormatter(argparse.ArgumentDefaultsHelpFormatter,
+					 argparse.RawDescriptionHelpFormatter):
+	pass
+
 def summarize_command(args):
 	"""Collect summary statistics"""
+
+	summarizer_doc = "summarizers:\n{commands}".format(
+		commands = "\n".join(
+			"  {name:10}:\t{doc}".format(name = name, doc = command.__doc__)
+			for name, command in plugins.summary_plugins.items()
+		)
+	)
+
 	parser = argparse.ArgumentParser(
+		formatter_class = MixedFormatter,
 		usage = "%(prog)s summarize [-h] infile [outfile]",
-		description = summarize_command.__doc__
+		description = summarize_command.__doc__,
+		epilog = summarizer_doc
 	)
 	parser.add_argument(
 		'infile', type = str
 	)
 	parser.add_argument(
-		'outfile', nargs='?', type=argparse.FileType('w'),
+		'outfile', nargs = '?', type = argparse.FileType('w'),
 	    default=sys.stdout
 	)
 	parser.add_argument(
-		'--info', nargs='*', default = sorted(plugins.summary_plugins),
-		help = "summarizers to run [{}]".format(
-			", ".join(plugins.summary_plugins)
-		)
+		'--include', nargs='*', 
+		default = sorted(plugins.summary_plugins),
+		help = "summarizers to run",
+		metavar = 'summarizer',
+		choices = plugins.summary_plugins
 	)
 
 	args = parser.parse_args(args)
@@ -90,22 +106,41 @@ def summarize_command(args):
 		print(file = args.outfile)
 
 def transform_command(args):
-	"""Run Markdown document through scanner plugins and output the result."""
-	parser = argparse.ArgumentParser(
-		usage = "%(prog)s transform [-h] infile [outfile]",
-		description = transform_command.__doc__
-	)
-	parser.add_argument('infile', type=str)
-	parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'),
-	                     default=sys.stdout)
-	parser.add_argument(
-		'--info', nargs='*', default = [],
-		help = "summarizers to run after processing [{}]".format(
-			", ".join(plugins.summary_plugins)
+	"""Process and output markdown file"""
+
+
+	summarizer_doc = "summarizers:\n{commands}".format(
+		commands = "\n".join(
+			"  {name:10}:\t{doc}".format(name = name, doc = command.__doc__)
+			for name, command in plugins.summary_plugins.items()
 		)
 	)
 
+
+	parser = argparse.ArgumentParser(
+		formatter_class = MixedFormatter,
+		usage = "%(prog)s transform [-h] infile [outfile]",
+		description = transform_command.__doc__,
+		epilog = summarizer_doc
+	)
+	parser.add_argument(
+		'infile', type = str
+	)
+	parser.add_argument(
+		'outfile', nargs = '?', type = argparse.FileType('w'),
+	    default=sys.stdout
+	)
+	parser.add_argument(
+		'--info', nargs='*', default = [],
+		help = "summarizers to run after processing",# [{}]".format(
+			#", ".join(plugins.summary_plugins)
+		#),
+		metavar = 'SUMMERIZER',
+		choices = plugins.summary_plugins
+	)
+
 	args = parser.parse_args(args)
+	# FIXME: fail if the summarisers are unknown
 	
 	scanner = PrintScanner(args.outfile, flatten.flatten(args.infile))
 	scan(scanner)
@@ -119,6 +154,7 @@ def transform_command(args):
 		plugin.summarize(sys.stderr)
 		print(file = sys.stderr)
 
+
 ## Main app
 def main():
 	commands = _collect_commands()
@@ -130,21 +166,24 @@ def main():
 	)
 
 	parser = argparse.ArgumentParser(
-		formatter_class=argparse.RawDescriptionHelpFormatter,
+		formatter_class = MixedFormatter,
 		description = "Process a Markdown document.",
 		epilog = commands_doc
 	)
 	parser.add_argument(
 		'command',
-		 help = "Subcommand to run"
+		 help = "Subcommand to run",
+		 metavar = 'command',
+		 choices = commands.keys()
 	)
 	parser.add_argument(
-		'args', nargs = "*", default = [], 
+		'args', nargs = "*", 
 		help = "Arguments to subcommand"
 	)
 	
 	
 	args = parser.parse_args(sys.argv[1:2]) # only first two 
+	print(args.command)
 	if args.command not in commands:
 		_report_error("Unknown subcommand: {}".format(args.command))
 		parser.print_help()
