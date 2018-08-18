@@ -1,4 +1,8 @@
-prefix:
-  pdf:
-    command: pandoc
-    arguments:
+# Global variables, inherited by other configurations
+command: pandoc
+arguments: []
+
+shared:
+  arguments:
+      - --standalone
+

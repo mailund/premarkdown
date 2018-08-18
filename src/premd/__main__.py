@@ -8,6 +8,7 @@ import colorama ; colorama.init()
 from termcolor import colored
 
 from . import configuration
+from . import command
 from . import flatten
 from .plugin import plugins
 
@@ -201,6 +202,9 @@ def build_command(args):
  # mailund@birc.au.dk
 	
 	configs = configuration.Configurations(args.infile)
+	cmd = command.Command(configs, args.outfile)
+	with open(args.infile, 'r') as infile, open(args.outfile, 'w') as outfile:
+		cmd.run(infile, outfile)
 	# FIXME: construct build command and write to its stdin id:11
  # output_processed(args.infile, args.outfile)
  #   
