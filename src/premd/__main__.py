@@ -140,7 +140,12 @@ def transform_command(args):
 	)
 
 	args = parser.parse_args(args)
-	# FIXME: fail if the summarisers are unknown
+	# FIXME: fail if the summarisers are unknown id:10
+ #   
+ # ----
+ # <https://github.com/mailund/premarkdown/issues/14>
+ # Thomas Mailund
+ # mailund@birc.au.dk
 	
 	scanner = PrintScanner(args.outfile, flatten.flatten(args.infile))
 	scan(scanner)
