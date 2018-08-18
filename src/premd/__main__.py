@@ -193,11 +193,21 @@ def build_command(args):
 	args = parser.parse_args(args)
 	if not os.path.isfile(args.infile):
 		_error("No such file: {infile}".format(infile = args.infile))
-	# FIXME: check if we can open output file
+	# FIXME: check if we can open output file id:12
+ #   
+ # ----
+ # <https://github.com/mailund/premarkdown/issues/18>
+ # Thomas Mailund
+ # mailund@birc.au.dk
 	
 	configs = configuration.Configurations(args.infile)
-	# FIXME: construct build command and write to its stdin
-	#output_processed(args.infile, args.outfile)
+	# FIXME: construct build command and write to its stdin id:11
+ # output_processed(args.infile, args.outfile)
+ #   
+ # ----
+ # <https://github.com/mailund/premarkdown/issues/17>
+ # Thomas Mailund
+ # mailund@birc.au.dk
 	
 	for name in args.info:
 		plugin = plugins.summary_plugins[name]
