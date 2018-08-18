@@ -1,0 +1,25 @@
+# Global arguments
+shared:
+  arguments: 
+    - --standalone
+    - --toc --variable secnumdepth=0
+    - -f markdown+smart
+    - --filter pandoc-crossref
+    - --filter pandoc-citeproc
+    - --top-level-division=chapter
+
+# Output specific
+filetype:
+  pdf:
+    arguments:
+      - --default-image-extension=pdf
+
+  epub:
+    arguments:
+     - --mathml 
+     - --default-image-extension=png
+     - -t epub3 --toc-depth=2
+
+targets:
+  foobar.pdf:
+    arguments: []
