@@ -140,6 +140,7 @@ def transform_command(args):
 	)
 
 	args = parser.parse_args(args)
+
 	scanner = PrintScanner(args.outfile, flatten.flatten(args.infile))
 	scan(scanner)
 
