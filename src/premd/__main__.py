@@ -140,8 +140,6 @@ def transform_command(args):
 	)
 
 	args = parser.parse_args(args)
-	# FIXME: fail if the summarisers are unknown
-	
 	scanner = PrintScanner(args.outfile, flatten.flatten(args.infile))
 	scan(scanner)
 
