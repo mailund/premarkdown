@@ -38,7 +38,8 @@ setup(
 
     package_dir = {'': 'src'},
     packages = find_packages("src"),
-
+    package_data = {'premd': ['config.yml']},
+    
     entry_points = {
         'console_scripts': [
             'premd = premd.__main__:main'

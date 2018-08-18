@@ -1,0 +1,4 @@
+prefix:
+  pdf:
+    command: pandoc
+    arguments:

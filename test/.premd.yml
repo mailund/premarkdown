@@ -1,0 +1,5 @@
+prefix:
+  pdf:
+    arguments:
+      - --template=templates/latex-template.tex
+      - --default-image-extension=pdf

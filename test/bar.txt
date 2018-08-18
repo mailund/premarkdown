@@ -1,0 +1,4 @@
+# Bar
+
+/qux.txt
+/qax.txt

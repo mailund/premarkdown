@@ -7,6 +7,7 @@ import argparse
 import colorama ; colorama.init()
 from termcolor import colored
 
+from . import configuration
 from . import flatten
 from .plugin import plugins
 
@@ -54,6 +55,14 @@ def scan(scanner):
 	for _ in scanner:
 		pass
 
+def output_processed(infilename, outfile):
+	scanner = PrintScanner(outfile, flatten.flatten(infilename))
+	scan(scanner)
+
+def analyse_processed(infilename):
+	scanner = Scanner(flatten.flatten(infilename))
+	scan(scanner)
+
 ## Commands
 # For formatting main argument parseing message
 class MixedFormatter(argparse.ArgumentDefaultsHelpFormatter,
@@ -92,11 +101,12 @@ def summarize_command(args):
 	)
 
 	args = parser.parse_args(args)
-	
-	scanner = Scanner(flatten.flatten(args.infile))
-	scan(scanner)
+	if not os.path.isfile(args.infile):
+		_error("No such file: {infile}".format(infile = args.infile))
 
-	for name in args.info:
+	analyse_processed(args.infile)
+	
+	for name in args.include:
 		plugin = plugins.summary_plugins[name]
 		header = plugin.__class__.__doc__
 		print(colored(header, attrs = ["bold"]), file = args.outfile)
@@ -107,7 +117,6 @@ def summarize_command(args):
 
 def transform_command(args):
 	"""Process and output markdown file"""
-
 
 	summarizer_doc = "summarizers:\n{commands}".format(
 		commands = "\n".join(
@@ -132,18 +141,16 @@ def transform_command(args):
 	)
 	parser.add_argument(
 		'--info', nargs='*', default = [],
-		help = "summarizers to run after processing",# [{}]".format(
-			#", ".join(plugins.summary_plugins)
-		#),
-		metavar = 'SUMMERIZER',
+		help = "summarizers to run after processing",
+		metavar = 'summarizer',
 		choices = plugins.summary_plugins
 	)
 
 	args = parser.parse_args(args)
-
-	scanner = PrintScanner(args.outfile, flatten.flatten(args.infile))
-	scan(scanner)
-
+	if not os.path.isfile(args.infile):
+		_error("No such file: {infile}".format(infile = args.infile))
+	output_processed(args.infile, args.outfile)
+	
 	for name in args.info:
 		plugin = plugins.summary_plugins[name]
 		header = plugin.__class__.__doc__
@@ -153,6 +160,53 @@ def transform_command(args):
 		plugin.summarize(sys.stderr)
 		print(file = sys.stderr)
 
+def build_command(args):
+	"""Build an output file"""
+
+	summarizer_doc = "summarizers:\n{commands}".format(
+		commands = "\n".join(
+			"  {name:10}:\t{doc}".format(name = name, doc = command.__doc__)
+			for name, command in plugins.summary_plugins.items()
+		)
+	)
+
+
+	parser = argparse.ArgumentParser(
+		formatter_class = MixedFormatter,
+		usage = "%(prog)s build [-h] infile outfile",
+		description = transform_command.__doc__,
+		epilog = summarizer_doc
+	)
+	parser.add_argument(
+		'infile', type = str
+	)
+	parser.add_argument(
+		'outfile', type = str
+	)
+	parser.add_argument(
+		'--info', nargs='*', default = [],
+		help = "summarizers to run after processing",
+		metavar = 'summarizer',
+		choices = plugins.summary_plugins
+	)
+
+	args = parser.parse_args(args)
+	if not os.path.isfile(args.infile):
+		_error("No such file: {infile}".format(infile = args.infile))
+	# FIXME: check if we can open output file
+	
+	configs = configuration.Configurations(args.infile)
+	# FIXME: construct build command and write to its stdin
+	#output_processed(args.infile, args.outfile)
+	
+	for name in args.info:
+		plugin = plugins.summary_plugins[name]
+		header = plugin.__class__.__doc__
+		print(colored(header, attrs = ["bold"]), file = sys.stderr)
+		print(colored('=' * len(header), attrs = ["bold"]), file = sys.stderr)
+
+		plugin.summarize(sys.stderr)
+		print(file = sys.stderr)
 
 ## Main app
 def main():
@@ -182,7 +236,6 @@ def main():
 	
 	
 	args = parser.parse_args(sys.argv[1:2]) # only first two 
-	print(args.command)
 	if args.command not in commands:
 		_report_error("Unknown subcommand: {}".format(args.command))
 		parser.print_help()
