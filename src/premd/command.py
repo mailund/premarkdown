@@ -2,7 +2,9 @@
 from . import utils
 import copy
 import os.path
-import subprocess
+import io
+from subprocess import Popen, PIPE
+
 
 def _get_filetype_dict(target):
 	target_split = target.rsplit(".", 1)
@@ -18,6 +20,7 @@ class Command:
 		
 	def __init__(self, config, target):
 		"""Class for building commandlines for building a target."""
+
 		# build the conf from most general to most specific
 		# we know that at least command and arguments will always be there
 		root = { 
@@ -31,33 +34,44 @@ class Command:
 			filetype_dict = copy.deepcopy(config.get(('filetype', filetype), {}))
 		target_dict = copy.deepcopy(config.get(('targets', target), {}))
 		
-		self._conf = root
-		utils.merge_dicts(self._conf, filetype_dict)
-		utils.merge_dicts(self._conf, target_dict)
+		conf = root
+		utils.merge_dicts(conf, filetype_dict)
+		utils.merge_dicts(conf, target_dict)
 		
 		# if there is a shared dict, update accordingly
 		if "shared" in config:
 			# shared can override command but arguments are added
 			shared = config["shared"]
 			if "command" in shared:
-				self._conf["command"] = shared["command"]
+				conf["command"] = shared["command"]
 			if "arguments" in shared:
-				self._conf["arguments"].extend(shared["arguments"])
+				conf["arguments"].extend(shared["arguments"])
 
 		# if the arguments contain spaces we need to split them for subprocess
 		args = []
-		for arg in self._conf["arguments"]:
+		for arg in conf["arguments"]:
 			args.extend(arg.split())
-		self._conf["arguments"] = args
+		conf["arguments"] = args
 
 		# finally, add the output file
-		self._conf["arguments"].extend(['-o', target])
+		conf["arguments"].extend(['-o', target])
 
-		if self._conf["command"] is None:
+		if conf["command"] is None:
 			raise NoCommandException
 
-	def run(self, instream, outstream):
-		cmdline = [self._conf["command"]] + self._conf["arguments"]
-		subprocess.Popen(cmdline, stdin=instream)
+		self._cmdline = [conf["command"]] + conf["arguments"]
 
+	def __enter__(self):
+		self._process = Popen(self._cmdline, stdin = PIPE)
+		self._stdin = io.TextIOWrapper(self._process.stdin)
+		return self
+
+	def __exit__(self, *foo):
+		self._stdin.close()
+		self._process.wait()
+
+	@property
+	def stdin(self):
+		return self._stdin
+	
 

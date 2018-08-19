@@ -147,6 +147,7 @@ def transform_command(args):
 		choices = plugins.summary_plugins
 	)
 
+
 	args = parser.parse_args(args)
 	if not os.path.isfile(args.infile):
 		_error("No such file: {infile}".format(infile = args.infile))
@@ -200,18 +201,9 @@ def build_command(args):
 		_error("Couldn't open file {outfile}".format(outfile = args.outfile))
 	
 	configs = configuration.Configurations(args.infile)
-	# FIXME: *both* scan and output to command id:13
- #   
- # ----
- # <https://github.com/mailund/premarkdown/issues/20>
- # Thomas Mailund
- # mailund@birc.au.dk
-	output_processed(args.infile, args.outfile)
+	with command.Command(configs, args.outfile) as cmd:
+		output_processed(args.infile, cmd.stdin)
 
-	cmd = command.Command(configs, args.outfile)
-	with open(args.infile, 'r') as infile, open(args.outfile, 'w') as outfile:
-		cmd.run(infile, outfile)
-	
 	for name in args.info:
 		plugin = plugins.summary_plugins[name]
 		header = plugin.__class__.__doc__
