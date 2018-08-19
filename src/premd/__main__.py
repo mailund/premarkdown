@@ -200,7 +200,12 @@ def build_command(args):
 		_error("Couldn't open file {outfile}".format(outfile = args.outfile))
 	
 	configs = configuration.Configurations(args.infile)
-	# FIXME: *both* scan and output to command
+	# FIXME: *both* scan and output to command id:13
+ #   
+ # ----
+ # <https://github.com/mailund/premarkdown/issues/20>
+ # Thomas Mailund
+ # mailund@birc.au.dk
 	output_processed(args.infile, args.outfile)
 
 	cmd = command.Command(configs, args.outfile)
