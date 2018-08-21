@@ -10,57 +10,50 @@ import functools
 from . import utils
 
 GLOBAL_CONFIGS = [
-	pkg_resources.resource_filename("premd", "config.yml"),
-	os.path.join(os.path.expanduser("~"), ".premd.yml")
+    pkg_resources.resource_filename("premd", "config.yml"),
+    os.path.join(os.path.expanduser("~"), ".premd.yml")
 ]
 
-def _collect_config_files(root_file):
-	root_dir = os.path.dirname(root_file)
-	project_config = os.path.join(root_dir, "premd.yml")
-	return GLOBAL_CONFIGS + [project_config]
-
-def _read_config_files(filenames):
-	# At the *very* least we want a shared dict with a command
-	# and a list of arguments. Now, these *should* be set
-	# in the global configuration file, but just in case
-	# we explicit start with that dict
-	configs = [
-		{
-			"command": None,
-			"arguments": []
-		}
-	]
-	for filename in filenames:
-		with open(filename, 'r') as config_file:
-			config = yaml.load(config_file)
-			configs.append(config)
-	return configs
+def _read_config_file(filename):
+    try:
+        with open(filename, 'r') as config_file:
+            return yaml.load(config_file)
+    except:
+        return {}
 
 
 class Configurations(collections.UserDict):
 
-	def _build_configuration_dict(self, root_file):
-		config_files = filter(
-			os.path.isfile, 
-			_collect_config_files(root_file)
-		)
-		yaml_dicts = _read_config_files(config_files)
 
-		self.data = {}
-		for yd in yaml_dicts:
-			utils.merge_dicts(self.data, yd)
+    def __init__(self):
+        # At the *very* least we want a shared dict with a command
+        # and a list of arguments. Now, these *should* be set
+        # in the global configuration file, but just in case
+        # we explicit start with that dict
+        self.data = {
+            "command": None,
+            "arguments": []
+        }
+        for config_file in GLOBAL_CONFIGS:
+            self._add_config_file(config_file)
 
-	def __init__(self, root_file):
-		self._build_configuration_dict(root_file)
+    def _add_config_file(self, fname):
+        yaml_dict = _read_config_file(fname)
+        utils.merge_dicts(self.data, yaml_dict)
 
-	def __getitem__(self, path):
-		try:
-			d = self.data
-			if isinstance(path, tuple):
-				for key in path:
-					d = d[key]
-				return d
-			else:
-				return d[path]
-		except:
-			raise KeyError
+    def push_config(self, root_file):
+        root_dir = os.path.dirname(root_file)
+        project_config = os.path.join(root_dir, "premd.yml")
+        self._add_config_file(project_config)
+
+    def __getitem__(self, path):
+        try:
+            d = self.data
+            if isinstance(path, tuple):
+                for key in path:
+                    d = d[key]
+                return d
+            else:
+                return d[path]
+        except:
+            raise KeyError

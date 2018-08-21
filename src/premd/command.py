@@ -31,7 +31,7 @@ class Command:
 		if filetype is None:
 			filetype_dict = {}
 		else:
-			filetype_dict = copy.deepcopy(config.get(('filetype', filetype), {}))
+			filetype_dict = copy.deepcopy(config.get(('filetypes', filetype), {}))
 		target_dict = copy.deepcopy(config.get(('targets', target), {}))
 		
 		conf = root

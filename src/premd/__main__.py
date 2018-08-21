@@ -163,90 +163,90 @@ def transform_command(args):
 		print(file = sys.stderr)
 
 def build_command(args):
-	"""Build an output file"""
+    """Build an output file"""
 
-	summarizer_doc = "summarizers:\n{commands}".format(
-		commands = "\n".join(
-			"  {name:10}:\t{doc}".format(name = name, doc = command.__doc__)
-			for name, command in plugins.summary_plugins.items()
-		)
-	)
+    summarizer_doc = "summarizers:\n{commands}".format(
+        commands = "\n".join(
+            "  {name:10}:\t{doc}".format(name = name, doc = command.__doc__)
+            for name, command in plugins.summary_plugins.items()
+        )
+    )
 
+    parser = argparse.ArgumentParser(
+        formatter_class = MixedFormatter,
+        usage = "%(prog)s build [-h] infile outfile",
+        description = transform_command.__doc__,
+        epilog = summarizer_doc
+    )
+    parser.add_argument(
+        'infile', type = str
+    )
+    parser.add_argument(
+        'outfile', type = str
+    )
+    parser.add_argument(
+        '--info', nargs='*', default = [],
+        help = "summarizers to run after processing",
+        metavar = 'summarizer',
+        choices = plugins.summary_plugins
+    )
 
-	parser = argparse.ArgumentParser(
-		formatter_class = MixedFormatter,
-		usage = "%(prog)s build [-h] infile outfile",
-		description = transform_command.__doc__,
-		epilog = summarizer_doc
-	)
-	parser.add_argument(
-		'infile', type = str
-	)
-	parser.add_argument(
-		'outfile', type = str
-	)
-	parser.add_argument(
-		'--info', nargs='*', default = [],
-		help = "summarizers to run after processing",
-		metavar = 'summarizer',
-		choices = plugins.summary_plugins
-	)
-
-	args = parser.parse_args(args)
-	if not os.path.isfile(args.infile):
-		_error("No such file: {infile}".format(infile = args.infile))
-	try:
-		open(args.outfile, "w")
-	except:
-		_error("Couldn't open file {outfile}".format(outfile = args.outfile))
+    args = parser.parse_args(args)
+    if not os.path.isfile(args.infile):
+        _error("No such file: {infile}".format(infile = args.infile))
+    try:
+        open(args.outfile, "w")
+    except:
+        _error("Couldn't open file {outfile}".format(outfile = args.outfile))
 	
-	configs = configuration.Configurations(args.infile)
-	with command.Command(configs, args.outfile) as cmd:
-		output_processed(args.infile, cmd.stdin)
+    CONFIGS.push_config(args.infile)
+    with command.Command(CONFIGS, args.outfile) as cmd:
+        output_processed(args.infile, cmd.stdin)
 
-	for name in args.info:
-		plugin = plugins.summary_plugins[name]
-		header = plugin.__class__.__doc__
-		print(colored(header, attrs = ["bold"]), file = sys.stderr)
-		print(colored('=' * len(header), attrs = ["bold"]), file = sys.stderr)
+    for name in args.info:
+        plugin = plugins.summary_plugins[name]
+        header = plugin.__class__.__doc__
+        print(colored(header, attrs = ["bold"]), file = sys.stderr)
+        print(colored('=' * len(header), attrs = ["bold"]), file = sys.stderr)
 
-		plugin.summarize(sys.stderr)
-		print(file = sys.stderr)
+        plugin.summarize(sys.stderr)
+        print(file = sys.stderr)
 
 ## Main app
+CONFIGS = configuration.Configurations() # should always be set when we run a script!
 def main():
-	commands = _collect_commands()
-	commands_doc = "commands:\n{commands}".format(
-		commands = "\n".join(
-			"  {name:10}:\t{doc}".format(name = name, doc = command.__doc__)
-			for name, command in commands.items()
-		)
-	)
+    commands = _collect_commands()
+    commands_doc = "commands:\n{commands}".format(
+        commands = "\n".join(
+            "  {name:10}:\t{doc}".format(name = name, doc = command.__doc__)
+            for name, command in commands.items()
+        )
+    )
 
-	parser = argparse.ArgumentParser(
-		formatter_class = MixedFormatter,
-		description = "Process a Markdown document.",
-		epilog = commands_doc
-	)
-	parser.add_argument(
-		'command',
-		 help = "Subcommand to run",
-		 metavar = 'command',
-		 choices = commands.keys()
-	)
-	parser.add_argument(
-		'args', nargs = "*", 
-		help = "Arguments to subcommand"
-	)
+    parser = argparse.ArgumentParser(
+        formatter_class = MixedFormatter,
+        description = "Process a Markdown document.",
+        epilog = commands_doc
+    )
+    parser.add_argument(
+        'command',
+        help = "Subcommand to run",
+        metavar = 'command',
+        choices = commands.keys()
+    )
+    parser.add_argument(
+        'args', nargs = "*", 
+        help = "Arguments to subcommand"
+    )
 	
 	
-	args = parser.parse_args(sys.argv[1:2]) # only first two 
-	if args.command not in commands:
-		_report_error("Unknown subcommand: {}".format(args.command))
-		parser.print_help()
-		sys.exit(1)
+    args = parser.parse_args(sys.argv[1:2]) # only first two 
+    if args.command not in commands:
+        _report_error("Unknown subcommand: {}".format(args.command))
+        parser.print_help()
+        sys.exit(1)
 	
-	commands[args.command](sys.argv[2:])
+    commands[args.command](sys.argv[2:])
 
 	
 # Run this in case the module is called as a program...
