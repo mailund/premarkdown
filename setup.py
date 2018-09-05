@@ -10,16 +10,16 @@ A preprocessor for combining and processing Markdown documents.
 from setuptools import setup, find_packages
 
 setup(
-    name = 'premd',
-    version = '0.1.0',
-    author = "Thomas Mailund",
-    author_email = "thomas@mailund.dk",
+    name='premd',
+    version='0.1.0',
+    author="Thomas Mailund",
+    author_email="thomas@mailund.dk",
 
-    url = "https://github.com/mailund/premarkdown",
-    download_url = "https://github.com/mailund/premarkdown",
+    url="https://github.com/mailund/premarkdown",
+    download_url="https://github.com/mailund/premarkdown",
 
-    description = "Preprocessor for markdown documents.",
-    long_description = __doc__,
+    description="Preprocessor for markdown documents.",
+    long_description=__doc__,
 
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -31,16 +31,16 @@ setup(
     ],
 
 
-    install_requires = [
+    install_requires=[
         "colorama",
         "termcolor"
     ],
 
-    package_dir = {'': 'src'},
-    packages = find_packages("src"),
-    package_data = {'premd': ['config.yml']},
-    
-    entry_points = {
+    package_dir={'': 'src'},
+    packages=find_packages("src"),
+    package_data={'premd': ['config.yml']},
+
+    entry_points={
         'console_scripts': [
             'premd = premd.__main__:main'
         ],
