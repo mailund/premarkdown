@@ -1,8 +1,0 @@
----
-title: foo
----
-
-# Foo
-
-/bar.txt
-/baz.txt

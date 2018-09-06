@@ -1,8 +1,11 @@
 
 import os.path
 import contextlib
+import re
 
 from .plugin import plugins
+
+FIGURE_RE = re.compile(r"!\[([^\]]*)\]\(([^\)]*)\)(.*)")
 
 class CircularInclusionError(Exception):
 	def __init__(self, filename, stack):
@@ -62,6 +65,27 @@ def flatten(filename, run_plugins = True, stack = None):
 				if os.path.isfile(subfile_full):
 					yield from flatten(subfile_full, stack)
 					continue
+
+			if line.startswith('!['): # A figure
+				match = FIGURE_RE.match(line)
+				if match is not None:
+					figlabel = match.group(1)
+					figfile = match.group(2)
+					trailing = match.group(3)
+					if figfile.startswith('/'):
+						# global path, do nothing
+						pass
+					else:
+						# local filename, adjust to input file
+						filedir = os.path.dirname(filename)
+						figfile = os.path.join(filedir, figfile)
+						line = "![{figlabel}]({figfile}){trailing}".format(
+								figlabel=figlabel,
+								figfile=figfile,
+								trailing=trailing
+						)						
+				# do not continue, we want the figure text to be
+				# included in the summaries
 
 			if run_plugins:
 				for observer in plugins.observer_plugins:

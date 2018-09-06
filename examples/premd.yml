@@ -12,6 +12,7 @@ shared:
 filetype:
   pdf:
     arguments:
+      - --template=templates/latex-template.tex
       - --default-image-extension=pdf
 
   epub:
@@ -20,6 +21,11 @@ filetype:
      - --default-image-extension=png
      - -t epub3 --toc-depth=2
 
+# Document setup
+root: book.txt
 targets:
-  foobar.pdf:
-    arguments: []
+  - book.pdf
+  - book.epub
+info:
+  - wc
+  - fixme

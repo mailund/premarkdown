@@ -1,0 +1,7 @@
+# Introduction
+
+This is an introduction chapter
+
+%% FIXME: Do something
+
+![Nested screenshot](screenshot.png){#fig:label}

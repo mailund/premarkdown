@@ -1,0 +1,163 @@
+\documentclass[12pt,twoside,openright]{memoir}
+\nonzeroparskip
+\setlength{\parindent}{0pt}
+
+\usepackage{utopia}
+\usepackage{helvet}%. Sans serif - Helvetica
+
+\usepackage{color,calc}
+\newsavebox{\ChpNumBox}
+\definecolor{ChapBlue}{rgb}{0.7,0.7,0.7}
+\makeatletter
+\newcommand*{\thickhrulefill}{%
+  \leavevmode\leaders\hrule height 1\p@ \hfill \kern \z@}
+\newcommand*\BuildChpNum[2]{%
+  \begin{tabular}[t]{@{}c@{}}
+    \makebox[0pt][c]{#1\strut}  \\[.5ex]
+    \colorbox{ChapBlue}{%
+      \rule[-10em]{0pt}{0pt}%
+      \rule{1ex}{0pt}\color{black}#2\strut
+      \rule{1ex}{0pt}}%
+  \end{tabular}}
+\makechapterstyle{BlueBox}{%
+  \renewcommand{\chapnamefont}{\large\sffamily\scshape}
+  \renewcommand{\chapnumfont}{\Huge\sffamily\bfseries}
+  \renewcommand{\chaptitlefont}{\raggedright\Huge\sffamily\bfseries}
+  \setlength{\beforechapskip}{20pt}
+  \setlength{\midchapskip}{26pt}
+  \setlength{\afterchapskip}{40pt}
+  \renewcommand{\printchaptername}{}
+  \renewcommand{\chapternamenum}{}
+  \renewcommand{\printchapternum}{%
+    \sbox{\ChpNumBox}{%
+      \BuildChpNum{\chapnamefont\@chapapp}%
+      {\chapnumfont\thechapter}}}
+  \renewcommand{\printchapternonum}{%
+    \sbox{\ChpNumBox}{%
+      \BuildChpNum{\chapnamefont\vphantom{\@chapapp}}%
+      {\chapnumfont\hphantom{\thechapter}}}}
+  \renewcommand{\afterchapternum}{}
+  \renewcommand{\printchaptertitle}[1]{%
+    \usebox{\ChpNumBox}\hfill
+    \parbox[t]{\hsize-\wd\ChpNumBox-1em}{%
+      \vspace{\midchapskip}%
+      \thickhrulefill\par
+      \chaptitlefont ##1\par}}%
+}
+\chapterstyle{BlueBox}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{graphicx}
+\makeatother
+\let\Oldincludegraphics\includegraphics
+\renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=\textwidth]{#1}}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage[pass, paperwidth=16cm, paperheight=23cm, bindingoffset=.5in]{geometry}
+\setlength{\pdfpagewidth}{\paperwidth}
+\setlength{\pdfpageheight}{\paperheight}
+
+%\usepackage{listings}
+$if(tables)$
+\usepackage{longtable,booktabs}
+$endif$
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e}
+\usepackage{textcomp}
+
+\setsecnumdepth{chapter}
+
+\setlength\cftpartnumwidth{3em}
+\setlength\cftchapternumwidth{3em}
+\setlength\cftsectionindent{3em}
+\renewcommand\contentsname{Table of Contents}
+
+\usepackage[unicode=true]{hyperref}
+$if(colorlinks)$
+\PassOptionsToPackage{usenames,dvipsnames}{color} % color is loaded by hyperref
+$endif$
+\hypersetup{
+$if(title-meta)$
+            pdftitle={$title-meta$},
+$endif$
+$if(author-meta)$
+            pdfauthor={$author-meta$},
+$endif$
+$if(keywords)$
+            pdfkeywords={$for(keywords)$$keywords$$sep$; $endfor$},
+$endif$
+$if(colorlinks)$
+            colorlinks=true,
+            linkcolor=$if(linkcolor)$$linkcolor$$else$Maroon$endif$,
+            citecolor=$if(citecolor)$$citecolor$$else$Blue$endif$,
+            urlcolor=$if(urlcolor)$$urlcolor$$else$Blue$endif$,
+$else$
+            pdfborder={0 0 0},
+$endif$
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+
+\renewcommand{\href}[2]{#2\footnote{\url{#1}}}
+
+\begin{document}
+
+\frontmatter
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\begingroup
+\thispagestyle{empty}
+{\bfseries\sffamily\noindent
+$if(series)$ {\large $series$}\\[50pt]$endif$ % Subtitle
+{\huge $title$}\\[35pt] % Book title
+{\Large $for(author)$$author$$sep$\\$endfor$} % Author name
+}
+\vfill
+\endgroup
+
+
+%----------------------------------------------------------------------------------------
+%	COPYRIGHT PAGE
+%----------------------------------------------------------------------------------------
+
+\newpage
+~\vfill
+\thispagestyle{empty}
+\noindent Copyright \copyright\ 2018 Thomas Mailund\\ % Copyright notice
+%\noindent \textit{First printing, March 2013} % Printing/edition date
+\clearpage
+
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS
+%----------------------------------------------------------------------------------------
+
+$if(toc)$
+$if(colorlinks)$
+\hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$black$endif$}
+$endif$
+\setcounter{tocdepth}{1}
+%\setcounter{tocdepth}{$toc-depth$}
+\pagestyle{empty} % No headers
+\tableofcontents % Print the table of contents itself
+\cleardoublepage % Forces the first chapter to start on an odd page so it's on the right
+$endif$
+
+
+%----------------------------------------------------------------------------------------
+%	BODY
+%----------------------------------------------------------------------------------------
+
+\mainmatter
+\pagestyle{Ruled}
+$body$
+
+%----------------------------------------------------------------------------------------
+
+\end{document}

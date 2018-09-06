@@ -1,0 +1,5 @@
+# This is a chapter nested in a sub-directory
+
+%% FIXME: Describe how this works.
+
+![Nested-nested screenshot](screenshot.png)
