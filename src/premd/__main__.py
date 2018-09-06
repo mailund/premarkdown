@@ -1,13 +1,11 @@
-"""
-running the premd script...
-"""
+"""running the premd script..."""
 
 import sys
 import os.path
 import argparse
 
-from termcolor import colored
 import colorama
+from termcolor import colored
 
 from . import configuration
 from . import command
@@ -17,6 +15,10 @@ from .plugin import plugins
 
 # Enable colours on Windows
 colorama.init()
+
+
+# should always be set when we run a script!
+CONFIGS = configuration.Configurations()
 
 
 def _report_error(msg):
@@ -38,13 +40,37 @@ def _collect_commands():
     return commands
 
 
+def _get_input_file(args):
+    if args.infile:
+        root_dir = os.path.dirname(args.infile)
+        CONFIGS.push_config(root_dir)
+        infile = args.infile
+    else:
+        # if we do not have an infile then get it from configuration file
+        root_dir = os.getcwd()
+        CONFIGS.push_config(root_dir)
+        try:
+            infile = CONFIGS["root"]
+        except KeyError:
+            _error("""An input file should either be specified in the
+configuration file or be provided on the commandline.""")
+
+    if not os.path.isfile(infile):
+        _error("No such file: {infile}".format(infile=infile))
+
+    return infile
+
+
 # FIXME make this something you can plug in id:1
 #
 # ----
 # <https://github.com/mailund/premarkdown/issues/3>
 # Thomas Mailund
 # mailund@birc.au.dk
+
 class Scanner:
+    """Class for scanning through a file."""
+
     def __init__(self, lines):
         self.lines = lines
 
@@ -54,6 +80,10 @@ class Scanner:
 
 
 class PrintScanner(Scanner):
+    """Class for scanning through a file while printing 
+to an output file
+    """
+
     def __init__(self, outfile, lines):
         super().__init__(lines)
         self.outfile = outfile
@@ -69,8 +99,11 @@ def scan(scanner):
         pass
 
 
-def output_processed(infilename, outfile):
-    scanner = PrintScanner(outfile, flatten.flatten(infilename))
+def output_processed(infilename, outfile, run_plugins = True):
+    scanner = PrintScanner(
+        outfile,
+        flatten.flatten(infilename, run_plugins)
+    )
     scan(scanner)
 
 
@@ -103,7 +136,7 @@ def summarize_command(args):
         epilog=summarizer_doc
     )
     parser.add_argument(
-        'infile', type=str
+        'infile', type=str, nargs='?'
     )
     parser.add_argument(
         'outfile', nargs='?', type=argparse.FileType('w'),
@@ -118,10 +151,9 @@ def summarize_command(args):
     )
 
     args = parser.parse_args(args)
-    if not os.path.isfile(args.infile):
-        _error("No such file: {infile}".format(infile=args.infile))
-
-    analyse_processed(args.infile)
+    infile = _get_input_file(args)
+    
+    analyse_processed(infile)
 
     for name in args.include:
         plugin = plugins.summary_plugins[name]
@@ -150,7 +182,7 @@ def transform_command(args):
         epilog=summarizer_doc
     )
     parser.add_argument(
-        'infile', type=str
+        'infile', type=str, nargs='?'
     )
     parser.add_argument(
         'outfile', nargs='?', type=argparse.FileType('w'),
@@ -164,9 +196,8 @@ def transform_command(args):
     )
 
     args = parser.parse_args(args)
-    if not os.path.isfile(args.infile):
-        _error("No such file: {infile}".format(infile=args.infile))
-    output_processed(args.infile, args.outfile)
+    infile = _get_input_file(args)
+    output_processed(infile, args.outfile)
 
     for name in args.info:
         plugin = plugins.summary_plugins[name]
@@ -190,15 +221,17 @@ def build_command(args):
 
     parser = argparse.ArgumentParser(
         formatter_class=MixedFormatter,
-        usage="%(prog)s build [-h] infile outfile",
+        usage="%(prog)s build [-h] [infile] [-o outfiles]",
         description=transform_command.__doc__,
         epilog=summarizer_doc
     )
     parser.add_argument(
-        'infile', type=str
+        'infile', type=str, nargs="?"
     )
     parser.add_argument(
-        'outfile', type=str
+        "-o", "--targets",
+        metavar="target",
+        type=str, nargs="*"
     )
     parser.add_argument(
         '--info', nargs='*', default=[],
@@ -208,18 +241,36 @@ def build_command(args):
     )
 
     args = parser.parse_args(args)
-    if not os.path.isfile(args.infile):
-        _error("No such file: {infile}".format(infile=args.infile))
-    try:
-        open(args.outfile, "w")
-    except IOError as ex:
-        strerror = ex.args[1]
-        _error("Couldn't open file {outfile}\n{ex}".format(
-            outfile=args.outfile, ex=strerror
-        ))
-    CONFIGS.push_config(args.infile)
-    with command.Command(CONFIGS, args.outfile) as cmd:
-        output_processed(args.infile, cmd.stdin)
+    infile = _get_input_file(args)
+
+    # Setup output file based on command line and configuration
+    if args.targets is None:
+        # Get targets from configurations
+        try:
+            targets = CONFIGS["targets"]
+        except KeyError:
+            _error("""Targets must be specified either in the configuration
+file or on the commandline.""")
+    else:
+        targets = args.targets
+
+    if not targets:
+        _error("No targets specified.")
+
+    run_plugins = True # used for only running plugins on first target
+    for target in targets:
+        try:
+            open(target, "w")
+        except IOError as ex:
+            strerror = ex.args[1]
+            _error("Couldn't open file {outfile}\n{ex}".format(
+                outfile=target, ex=strerror
+            ))
+
+        with command.RunCommand(CONFIGS, target) as cmd:
+            output_processed(infile, cmd.stdin, run_plugins)
+
+        run_plugins = False # don't run the plugins for remaining targets
 
     for name in args.info:
         plugin = plugins.summary_plugins[name]
@@ -232,11 +283,6 @@ def build_command(args):
 
 
 # Main app
-
-# should always be set when we run a script!
-CONFIGS = configuration.Configurations()
-
-
 def main():
     "Main entry point for the script"
     commands = _collect_commands()

@@ -41,8 +41,7 @@ class Configurations(collections.UserDict):
         yaml_dict = _read_config_file(fname)
         utils.merge_dicts(self.data, yaml_dict)
 
-    def push_config(self, root_file):
-        root_dir = os.path.dirname(root_file)
+    def push_config(self, root_dir):
         project_config = os.path.join(root_dir, "premd.yml")
         self._add_config_file(project_config)
 

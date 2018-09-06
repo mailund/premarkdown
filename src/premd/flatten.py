@@ -21,7 +21,7 @@ def _add_to_stack(stack, filename):
 	yield stack
 	stack.pop()
 
-def flatten(filename, stack = None):
+def flatten(filename, run_plugins = True, stack = None):
 	"""
 	Recursively scan through files and yield all lines, 
 	essentially pretending that the recursive sequence of files
@@ -42,7 +42,7 @@ def flatten(filename, stack = None):
 				rest = "" if rest == [] else rest[0].strip()
 
 				# Handle plugins
-				if tag in plugins.tag_plugins:
+				if run_plugins and tag in plugins.tag_plugins:
 					plugins.tag_plugins[tag].handle_tag(filename, lineno, tag, rest)
 				
 				# Whether we handled a tag or not, we do not
@@ -63,7 +63,8 @@ def flatten(filename, stack = None):
 					yield from flatten(subfile_full, stack)
 					continue
 
-			for observer in plugins.observer_plugins:
-				observer.observe_line(filename, lineno, line)
+			if run_plugins:
+				for observer in plugins.observer_plugins:
+					observer.observe_line(filename, lineno, line)
 				
 			yield line

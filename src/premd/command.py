@@ -16,7 +16,7 @@ def _get_filetype_dict(target):
 class NoCommandException(Exception):
 	pass
 
-class Command:
+class RunCommand:
 		
 	def __init__(self, config, target):
 		"""Class for building commandlines for building a target."""
