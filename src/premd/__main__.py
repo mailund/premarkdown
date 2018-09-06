@@ -242,6 +242,14 @@ def build_command(args):
 
     args = parser.parse_args(args)
     infile = _get_input_file(args)
+    if args.info:
+        info = args.info
+    else:
+        # if there are no info specified we get them from the configuration file
+        try:
+            info = CONFIGS["info"]
+        except KeyError:
+            info = []
 
     # Setup output file based on command line and configuration
     if args.targets is None:
@@ -272,7 +280,7 @@ file or on the commandline.""")
 
         run_plugins = False # don't run the plugins for remaining targets
 
-    for name in args.info:
+    for name in info:
         plugin = plugins.summary_plugins[name]
         header = plugin.__class__.__doc__
         print(colored(header, attrs=["bold"]), file=sys.stderr)
