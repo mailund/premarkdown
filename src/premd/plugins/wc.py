@@ -19,10 +19,10 @@ class Section:
             total_count += child.word_count
             child = child.sibling
         return total_count
+
     @word_count.setter
     def word_count(self, count):
         self._word_count = count
-
 
     def __repr__(self):
         fmt = 'Section(level={!r}, label={!r}'
@@ -32,22 +32,12 @@ class Section:
             self.first_child, self.last_child
         )
 
-    def hierarchy(self, indent, lines):
-        node = "{} {} ({})".format(
-            indent, self.label, self.word_count
-        )
-        lines.append(node)
-
-        child_indent = indent + "#"
+    def __iter__(self):
+        yield self.level, self.label, self.word_count
         child = self.first_child
         while child is not None:
-            child.hierarchy(child_indent, lines)
+            yield from child
             child = child.sibling
-
-    def __str__(self):
-        lines = []
-        self.hierarchy("", lines)
-        return '\n'.join(lines)
 
     def add_sibling(self, sibling):
         assert self.sibling is None, \
@@ -88,6 +78,9 @@ class SectionCollector:
         else: # self.current.level == level
             self.current.add_sibling(next_section)
         self.current = next_section
+
+    def __iter__(self):
+        return iter(self.root)
         
     def __str__(self):
         return 'Document:\n{}'.format(self.root)
@@ -96,7 +89,7 @@ class SectionCollector:
 class WC(plugin.ObserverPlugin, plugin.SummaryPlugin):
     """Word count in document"""
     def __init__(self):
-        self.document = SectionCollector()
+        self.sections = SectionCollector()
 
     def observe_line(self, filename, lineno, line):
         # FIXME: better recognition of words id:7
@@ -107,8 +100,8 @@ class WC(plugin.ObserverPlugin, plugin.SummaryPlugin):
         # mailund@birc.au.dk
         if line.startswith('#'):
             header_opcode, header_label = line.split(maxsplit=1)
-            self.document.add_section(len(header_opcode), header_label)
-        self.document.current.word_count += len(line.split())
+            self.sections.add_section(len(header_opcode), header_label)
+        self.sections.current.word_count += len(line.split())
 
     def summarize(self, outfile):
         # FIXME: better formatting id:9
@@ -117,5 +110,10 @@ class WC(plugin.ObserverPlugin, plugin.SummaryPlugin):
         # <https://github.com/mailund/premarkdown/issues/6>
         # Thomas Mailund
         # mailund@birc.au.dk
-        print(self.document, file=outfile)
+        for level, header, wc in self.sections:
+            if header == "<root>":
+                # Just a special case for the entire document...
+                print("Word count for the entire document:", wc)
+            else:
+                print('#' * level, header, wc)
 
