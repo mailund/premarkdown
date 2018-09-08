@@ -6,3 +6,11 @@ author: "Thomas Mailund"
 /chapters/Introduction.txt
 /chapters/Nested_Chapters/Nested.txt
 
+# A different section
+
+This is in the main file
+
+## A different subsection
+
+So is this
+
